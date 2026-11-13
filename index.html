@@ -1,0 +1,203 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="친구들과 한 화면에서 번갈아 두는 육각형 전략 보드게임"><title>젬블로 동아리</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1522;--surface:#141f31;--line:#29384d;--text:#f1f5fc;--dim:#aab9ce;--mint:#7ce6c1;--player:#56aaff}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 45% 0,#1d3048,var(--bg) 65%);font:15px/1.5 "Pretendard","Malgun Gothic",system-ui,sans-serif;color:var(--text);min-height:100vh}button,select{font:inherit;color:inherit}button,select,summary{cursor:pointer}button,select{background:#1c2a40;border:1px solid #35465f;border-radius:10px;padding:8px 13px}button:hover:not(:disabled){background:#293c57}button:disabled{opacity:.36;cursor:default}button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--mint);outline-offset:3px}[hidden]{display:none!important}.shell{max-width:1250px;margin:auto;padding:20px clamp(12px,3vw,36px) 30px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:10px}.brand span{font-size:34px;color:var(--mint);line-height:1}.brand h1{font-size:clamp(21px,3vw,30px);margin:0;letter-spacing:-.06em}.setup{display:flex;gap:7px;align-items:center}.primary{background:var(--mint);color:#102b26;font-weight:800;border-color:var(--mint)}button.primary:hover:not(:disabled){background:#a0f1d6}.players{display:grid;grid-template-columns:repeat(var(--count),minmax(0,1fr));gap:7px;margin-bottom:12px}.player{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-width:0}.player.current{border-color:var(--c);background:color-mix(in srgb,var(--c) 13%,var(--surface))}.player b{color:var(--c);display:block;font-size:14px}.player span{font-size:12px;color:var(--dim)}.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px}.panel{border:1px solid var(--line);border-radius:18px;background:var(--surface)}.arena{overflow:hidden;background:radial-gradient(ellipse at center,#202f43,#121d2d 75%);padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center}#board{display:block;width:100%;max-width:670px;max-height:65vh;min-height:270px;touch-action:manipulation}.cell{stroke:#34445b;stroke-width:.10;fill:#1a2739}.target{cursor:pointer;fill:color-mix(in srgb,var(--player) 32%,#18273b);stroke:var(--player)}.stone{stroke:#ffffff55}.ghost{pointer-events:none;stroke:#fff;stroke-width:.16;opacity:.65}.mark{pointer-events:none}.arena p{margin:4px 0 0;color:var(--dim);font-size:13px;text-align:center}.side{padding:15px}.side h2{margin:0;font-size:18px;color:var(--player)}#status{font-size:13px;min-height:40px;color:var(--dim);margin:5px 0 8px}.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.piece{padding:3px;height:50px;display:grid;place-items:center}.piece svg{width:100%;height:39px}.piece.chosen{border-color:var(--player);background:color-mix(in srgb,var(--player) 18%,#172337)}.piece.used{opacity:.18}.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.tools button{padding:7px 3px;font-size:13px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.rules{margin-top:12px;padding:11px 15px;color:var(--dim);font-size:13px}.rules summary{color:var(--text);font-weight:700}.rules ul{margin:8px 0 1px;padding-left:20px}.result{padding:8px 10px;background:#223b39;border-radius:9px;color:#a6f3d7;margin-bottom:8px;font-weight:bold}.player:nth-child(n){white-space:nowrap}@media(max-width:760px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr;gap:2px}.tray{grid-template-columns:repeat(6,1fr)}.piece{height:40px}.piece svg{height:33px}#board{max-height:49vh}.players{grid-template-columns:repeat(min(var(--count),3),minmax(0,1fr))}}@media(max-width:400px){.shell{padding:10px}.setup button,.setup select{padding:6px}.brand{gap:5px}.brand span{font-size:24px}}
+</style></head><body><main class="shell"><header><div class="brand"><span aria-hidden="true">⬢</span><h1>젬블로 동아리</h1></div><div class="setup"><select id="count" aria-label="플레이어 수"><option value="2">2명</option><option value="3">3명</option><option value="4" selected>4명</option><option value="5">5명</option><option value="6">6명</option></select><button id="reset" class="primary">새 게임</button></div></header>
+<div id="players" class="players" aria-label="플레이어 점수"></div><div class="layout"><section class="panel arena" aria-label="게임판"><svg id="board" role="group" aria-label="육각형 게임판"></svg><p id="boardHelp">조각을 고르고, 빛나는 칸을 눌러 배치할 자리를 골라요.</p></section><section class="panel side" aria-label="조각과 배치 도구"><div id="result" class="result" role="status" hidden></div><h2 id="turn"></h2><p id="status" aria-live="polite"></p><div id="tray" class="tray" aria-label="내 조각"></div><div class="tools"><button id="left">↶ 왼쪽으로 돌리기</button><button id="right">↷ 오른쪽으로 돌리기</button></div><div class="actions"><button id="pass">차례 넘기기</button><button id="place" class="primary">여기에 놓기</button></div></section></div>
+<details class="panel rules"><summary>게임 방법</summary><ul><li>한 기기에서 번호 순서대로 한 조각씩 놓아요. 첫 조각은 내 번호가 적힌 시작 칸을 덮어야 해요.</li><li>두 번째부터는 같은 색 조각에 닿지 않게, 육각형 변 하나 길이만큼 띄워 놓아요. 연결선은 이미 놓인 조각의 내부를 가로지를 수 없어요.</li><li>조각은 60°씩 돌릴 수 있어요. 뒤집기는 금지예요. 표시된 칸은 조각을 놓을 때 기준이 되는 칸이에요.</li><li>둘 수 있는 조각이 없으면 차례를 넘겨요. 모두 더 놓을 수 없으면 끝나고, 육각형 칸을 가장 많이 채운 사람이 이겨요.</li></ul></details></main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const colors=['#59adff','#ff7183','#50d9a4','#ffc45e','#ba97ff','#54dbed'];
+const directions=[[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]];
+const offsets=[[0,-2],[1,-1],[1,1],[0,2],[-1,1],[-1,-1]];
+const key=([a,b])=>a+','+b;
+const add=([a,b],[c,d])=>[a+c,b+d];
+const rotate=([q,r])=>[-r,q+r];
+const mirror=([q,r])=>[r,q];
+const center=([q,r])=>[2*q+r,3*r];
+const verts=p=>offsets.map(o=>add(center(p),o));
+const edgeKey=(a,b)=>[key(a),key(b)].sort().join('|');
+const points=vs=>vs.map(([x,y])=>[x*Math.sqrt(3),y].join(',')).join(' ');
+function signature(shape){
+  const first=[...shape].sort(([a,b],[c,d])=>a-c||b-d)[0];
+  return shape.map(([q,r])=>key([q-first[0],r-first[1]])).sort().join(';');
+}
+function rotations(shape){
+  return Array.from({length:6},()=>{const current=shape;shape=shape.map(rotate);return current;});
+}
+function makePieces(){
+  let shapes=[[[0,0]]];
+  const pieces=[];
+  for(const count of [1,1,3,5,8]){
+    shapes.sort((a,b)=>Math.max(...a.map(([q,r])=>Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r))))-Math.max(...b.map(([q,r])=>Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r)))));
+    pieces.push(...shapes.slice(0,count).map(rotations));
+    const next=new Map();
+    for(const shape of shapes) for(const cell of shape) for(const d of directions){
+      const p=add(cell,d);
+      if(shape.some(c=>key(c)===key(p))) continue;
+      const grown=[...shape,p];
+      const canonical=[...rotations(grown),...rotations(grown.map(mirror))].map(signature).sort()[0];
+      if(!next.has(canonical)) next.set(canonical,grown);
+    }
+    shapes=[...next.values()];
+  }
+  return pieces;
+}
+const pieces=makePieces();
+let state, cells, lattice, edges, selected, angle, anchor, previewAnchor, legal, turnHasMove;
+const board=$('board');
+function setup(count){
+  const radius=count===2?5:count<=4?6:7;
+  cells=[];lattice=new Map();edges=new Map();
+  for(let q=-radius;q<=radius;q++) for(let r=-radius;r<=radius;r++){
+    if(Math.abs(q+r)>radius) continue;
+    const pos=[q,r], id=key(pos), vertices=verts(pos);
+    const cell={pos,id,vertices,links:[]};
+    cells.push(cell);lattice.set(id,cell);
+    vertices.forEach((v,i)=>{
+      const e=edgeKey(v,vertices[(i+1)%6]);
+      if(!edges.has(e)) edges.set(e,[]);
+      edges.get(e).push(id);
+    });
+  }
+  const verticesToCells=new Map();
+  for(const cell of cells) for(const v of cell.vertices){
+    const id=key(v);
+    if(!verticesToCells.has(id)) verticesToCells.set(id,[]);
+    verticesToCells.get(id).push(cell.id);
+  }
+  for(const cell of cells) for(const v of cell.vertices) for(const d of offsets){
+    const other=add(v,d), e=edgeKey(v,other);
+    if(!edges.has(e)) continue;
+    for(const id of verticesToCells.get(key(other))??[]){
+      if(id!==cell.id) cell.links.push([id,e]);
+    }
+  }
+  const starts={2:[0,3],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,3,4],6:[0,1,2,3,4,5]}[count];
+  state={players:starts.map((d,i)=>({start:key(directions[d].map(n=>n*radius)),used:new Set(),score:0,color:colors[i]})),stones:new Map(),turn:0,passes:0,serial:0,done:false};
+  const width=Math.sqrt(3)*(4*radius+2)+2, height=6*radius+6;
+  board.setAttribute('viewBox',[-width/2,-height/2,width,height].join(' '));
+  newTurn();
+}
+function footprint(shape, origin){return shape.map(p=>key(add(p,origin)));}
+function options(){
+  const player=state.players[state.turn];
+  if(!player.score) return [player.start];
+  return cells.filter(cell=>!state.stones.has(cell.id)&&cell.links.some(([target,e])=>{
+    if(state.stones.get(target)?.player!==state.turn) return false;
+    const [a,b]=edges.get(e);
+    const first=state.stones.get(a);
+    return !first || first.piece!==state.stones.get(b)?.piece;
+  })).map(cell=>cell.id);
+}
+function valid(shape, origin, allowed){
+  const ids=footprint(shape,origin);
+  if(ids.some(id=>!lattice.has(id)||state.stones.has(id))) return false;
+  if(!ids.some(id=>allowed.has(id))) return false;
+  return !ids.some(id=>directions.some(d=>state.stones.get(key(add(lattice.get(id).pos,d)))?.player===state.turn));
+}
+function positions(shape, candidates, allowed){
+  const result=new Set(), checked=new Set();
+  for(const id of candidates) for(const [q,r] of shape){
+    const [x,y]=lattice.get(id).pos;
+    const p=[x-q,y-r], k=key(p);
+    if(checked.has(k)) continue;
+    checked.add(k);
+    if(valid(shape,p,allowed)) result.add(k);
+  }
+  return result;
+}
+function movesFor(index){
+  const candidates=options(), allowed=new Set(candidates);
+  return pieces[index].map(shape=>positions(shape,candidates,allowed));
+}
+let available;
+function newTurn(){
+  selected=-1;angle=0;anchor=null;previewAnchor=null;legal=new Set();
+  available=state.done?[]:pieces.map((_,i)=>state.players[state.turn].used.has(i)?null:movesFor(i));
+  turnHasMove=available.some(m=>m?.some(p=>p.size));
+  render();
+}
+function selectPiece(index){
+  if(!available[index]) return;
+  selected=index;angle=Math.max(0,available[index].findIndex(p=>p.size));
+  anchor=null;previewAnchor=null;
+  refreshTargets();
+}
+function refreshTargets(){
+  legal=available[selected]?.[angle]??new Set();
+  const previous=anchor??previewAnchor;
+  if(!legal.has(anchor)) anchor=null;
+  previewAnchor=legal.has(previous)?previous:legal.values().next().value??previous;
+  render();
+}
+function nextTurn(){
+  state.turn=(state.turn+1)%state.players.length;
+  newTurn();
+}
+function commit(){
+  if(state.done||!legal.has(anchor)) return;
+  const player=state.players[state.turn], shape=pieces[selected][angle];
+  const origin=lattice.get(anchor).pos;
+  state.serial++;
+  for(const id of footprint(shape,origin)) state.stones.set(id,{player:state.turn,piece:state.serial});
+  player.used.add(selected);player.score+=shape.length;state.passes=0;
+  nextTurn();
+}
+function pass(){
+  if(state.done||turnHasMove) return;
+  state.passes++;
+  state.done=state.passes===state.players.length;
+  nextTurn();
+}
+function tile(shape,color){
+  const polygons=shape.map(p=>verts(p));
+  const x=polygons.flat().map(([x])=>x*Math.sqrt(3)),y=polygons.flat().map(([,y])=>y);
+  return '<svg aria-hidden="true" viewBox="'+[Math.min(...x)-1,Math.min(...y)-1,Math.max(...x)-Math.min(...x)+2,Math.max(...y)-Math.min(...y)+2].join(' ')+'">'+polygons.map(v=>'<polygon points="'+points(v)+'" fill="'+color+'" stroke="#172337" stroke-width=".16"/>').join('')+'</svg>';
+}
+function drawBoard(){
+  const starts=new Map(state.players.map((p,i)=>[p.start,i]));
+  const pending=anchor??previewAnchor;
+  const ghost=pending?pieces[selected][angle].map(p=>add(p,lattice.get(pending).pos)):[];
+  const previewColor=legal.has(pending)?colors[state.turn]:'#fb7185';
+  board.innerHTML=cells.map(cell=>{
+    const stone=state.stones.get(cell.id), start=starts.get(cell.id), target=legal.has(cell.id);
+    const [x,y]=center(cell.pos);
+    return '<polygon data-cell="'+cell.id+'" class="cell '+(stone?'stone':target?'target':'')+'" points="'+points(cell.vertices)+'"'+(stone?' style="fill:'+colors[stone.player]+'"':'')+(target?' role="button" tabindex="0" aria-label="배치 위치 '+(cell.pos[0]+8)+', '+(cell.pos[1]+8)+'"':'')+'/>'+
+      (start!==undefined&&!stone?'<text class="mark" x="'+x*Math.sqrt(3)+'" y="'+(y+.48)+'" text-anchor="middle" fill="'+colors[start]+'" font-size="1.35" font-weight="800">'+(start+1)+'</text>':'');
+  }).join('')+ghost.map(p=>'<polygon class="ghost" points="'+points(verts(p))+'" fill="'+previewColor+'"/>').join('');
+}
+function render(){
+  const player=state.players[state.turn];
+  document.documentElement.style.setProperty('--player',player.color);
+  $('players').style.setProperty('--count',state.players.length);
+  $('players').innerHTML=state.players.map((p,i)=>'<div class="player '+(!state.done&&i===state.turn?'current':'')+'" style="--c:'+p.color+'"><b>플레이어 '+(i+1)+'</b><span>'+p.score+'칸 · '+(pieces.length-p.used.size)+'조각 남음</span></div>').join('');
+  $('turn').textContent=state.done?'게임 종료':'플레이어 '+(state.turn+1)+' 차례';
+  $('result').hidden=!state.done;
+  if(state.done){
+    const max=Math.max(...state.players.map(p=>p.score));
+    const winners=state.players.flatMap((p,i)=>p.score===max?[i+1]:[]);
+    $('result').textContent='플레이어 '+winners.join(' · ')+' '+(winners.length>1?'공동 우승':'우승')+' · '+max+'칸';
+  }
+  $('status').textContent=state.done?'게임 결과를 위에서 확인하세요.':!turnHasMove?'놓을 수 있는 조각이 없어요. 차례를 넘겨 주세요.':anchor?'이 위치가 맞으면 ‘여기에 놓기’를 누르세요.':selected<0?(!player.score?'조각을 골라 내 번호가 있는 시작 칸을 덮으세요.':'이번 차례에 놓을 조각을 고르세요.'):legal.size?legal.size+'곳에 놓을 수 있어요. 빛나는 칸을 선택하세요.':'이 방향으로 놓을 자리가 없어요. 조각을 돌려 보세요.';
+  $('tray').innerHTML=pieces.map((angles,i)=>'<button type="button" data-piece="'+i+'" class="piece '+(i===selected?'chosen ':'')+(player.used.has(i)?'used':'')+'" aria-label="'+angles[0].length+'칸 조각 '+(i+1)+'" aria-pressed="'+(i===selected)+'"'+(!available[i]?.some(p=>p.size)?' disabled':'')+'>'+tile(angles[i===selected?angle:0],player.color)+'</button>').join('');
+  $('left').disabled=$('right').disabled=selected<0||state.done;
+  $('place').disabled=!anchor||state.done;
+  $('pass').disabled=turnHasMove||state.done;
+  drawBoard();
+}
+$('tray').onclick=e=>{const button=e.target.closest('[data-piece]');if(button&&!button.disabled)selectPiece(Number(button.dataset.piece));};
+function chooseCell(e){
+  const id=e.target.dataset.cell;
+  if(!legal.has(id)) return;
+  anchor=id;previewAnchor=id;render();$('place').focus({preventScroll:true});
+}
+board.onclick=chooseCell;
+board.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();chooseCell(e);}};
+$('left').onclick=()=>{angle=(angle+5)%6;refreshTargets();};
+$('right').onclick=()=>{angle=(angle+1)%6;refreshTargets();};
+$('place').onclick=commit;$('pass').onclick=pass;
+$('reset').onclick=()=>{if(!state.stones.size||state.done||confirm('진행 중인 게임을 끝내고 새 게임을 시작할까요?'))setup(Number($('count').value));};
+$('count').onchange=()=>{if(!state.stones.size||state.done)setup(Number($('count').value));};
+setup(Number($('count').value));
+</script></body></html>
